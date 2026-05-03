@@ -3,10 +3,8 @@
 
 #include "player.h"
 
-// save game
 int saveGame(Player *p);
-
-// load game
 int loadGame(Player *p);
+int saveExists();
 
 #endif

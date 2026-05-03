@@ -5,112 +5,124 @@
 #include "player.h"
 
 static const char *enemyNames[] = {
-    "Goblin", "Skeleton", "Orc", "Troll", "Dragon"
+    "Goblin", "Skeleton", "Orc", "Dark Elf", "Troll",
+    "Dragon", "Vampire", "Witch", "Giant Spider", "Demon"
 };
 
-// generate enemy - scaled by floor
-// input: floor, difficulty
-// output: Enemy
 Enemy generateEnemy(int floor, int difficulty) {
     Enemy e;
-    int idx = rand() % 5;
-    strcpy(e.name, enemyNames[idx]);
+    int idx = rand() % 10;
+    strncpy(e.name, enemyNames[idx], 29);
+    e.name[29] = '\0';
 
     int base = floor * 10;
-    e.hp    = base + rand() % 20;
-    e.attck = base / 5 + difficulty * 2;
+    e.hp = base + rand() % 20 + 10;
+        e.attack = base / 5 + difficulty * 2 + rand() % 5;
 
     return e;
 }
 
-// do battle between player and enemy
-// input: player pointer, enemy pointer
-// output: 1 = player wins, 0 = player dies
 int doBattle(Player *p, Enemy *e) {
-    printf("Battle start! %s vs %s\n", p->name, e->name);
+    printf("\n  === BATTLE ===\n");
+    printf("  %s HP:%d  vs  %s HP:%d\n\n", p->name, p->hp, e->name, e->hp);
 
     while (p->hp > 0 && e->hp > 0) {
-        printf("[%s HP:%d] [%s HP:%d]\n", p->name, p->hp, e->name, e->hp);
-        printf("1. Attack  2. Run\n> ");
+        printf("  [%s HP:%d] [%s HP:%d]\n", p->name, p->hp, e->name, e->hp);
+        printf("  1. Attack   2. Run\n  > ");
 
         int choice;
         scanf("%d", &choice);
 
         if (choice == 2) {
-            printf("You ran away!\n");
-            return 1;
+                if (p->difficulty == 3) {
+                printf("  Can't run in Hard mode!\n");
+            } else {
+                printf("  You ran away!\n");
+                return 1;
+            }
         }
 
-        // player attacks
-        int dmg = p->attck + rand() % 5;  // using typo field name
-        e->hp -= dmg;
-        printf("You dealt %d damage!\n", dmg);
+        int playerDmg = p->attack + rand() % 5;
+        e->hp -= playerDmg;
+        printf("  You dealt %d damage!\n", playerDmg);
 
         if (e->hp <= 0) {
-            printf("%s defeated!\n", e->name);
+            printf("  %s defeated!\n", e->name);
+            int heal = 10 + rand() % 10;
+            p->hp += heal;
+                if (p->hp > p->maxHp) p->hp = p->maxHp;
+            printf("  Recovered %d HP.\n", heal);
             return 1;
         }
 
-        // enemy attacks
-        int edgm = e->attck - p->defense;  // typo variable name
-        if (edgm < 1) edgm = 1;
-        p->hp -= edgm;
-        printf("%s dealt %d damage to you!\n", e->name, edgm);
+        int enemyDmg = e->attack - p->defense;
+        if (enemyDmg < 1) enemyDmg = 1;
+        if (rand() % 10 == 0) {
+            enemyDmg *= 2;
+            printf("  Critical! ");
+        }
+        p->hp -= enemyDmg;
+            printf("  %s dealt %d damage!\n\n", e->name, enemyDmg);
     }
 
     if (p->hp <= 0) {
-        printf("You died...\n");
+        printf("  You were defeated.\n");
         return 0;
     }
     return 1;
 }
 
-// random event on each floor
-// input: player pointer, difficulty
-// output: none
 void randomEvent(Player *p, int difficulty) {
     int roll = rand() % 100;
+    int monsterChance = 40 + difficulty * 10;
+    int trapChance = monsterChance + 15;
+        int treasureChance = trapChance + 20;
 
-    if (roll < 50) {
-        printf("A monster appears!\n");
+    if (roll < monsterChance) {
+        printf("\n  [!] Monster!\n");
         Enemy e = generateEnemy(p->floor, difficulty);
-        int result = doBattle(p, &e);
-        if (result == 0) p->hp = 0;
-    } else if (roll < 65) {
-        int dmg = 5 + rand() % 10;
+        int survived = doBattle(p, &e);
+        if (!survived) p->hp = 0;
+    }
+    else if (roll < trapChance) {
+        int dmg = 5 + rand() % (difficulty * 8);
         p->hp -= dmg;
-        printf("Trap! -%d HP\n", dmg);
-    } else if (roll < 85) {
-        int heal = 10 + rand() % 15;
+        if (p->hp < 0) p->hp = 0;
+        printf("\n  [!] Trap! -%d HP\n", dmg);
+    } else if (roll < treasureChance) {
+        int heal = 15 + rand() % 20;
         p->hp += heal;
-        // forgot to cap hp at maxHp
-        printf("Treasure! +%d HP\n", heal);
-    } else {
-        printf("Nothing happened.\n");
+        if (p->hp > p->maxHp) p->hp = p->maxHp;
+        printf("\n  [*] Treasure! +%d HP\n", heal);
+    }
+    else {
+        printf("\n  [ ] Nothing happened.\n");
     }
 }
 
-// main game loop
-// input: player pointer
-// output: none
 void gameLoop(Player *p) {
-    printf("Welcome %s! Entering dungeon...\n", p->name);
+        printf("\n  Good luck, %s!\n", p->name);
 
     while (p->hp > 0) {
-        printf("\n== Floor %d == HP: %d/%d ==\n", p->floor, p->hp, p->maxHp);
-        printf("1. Move  2. Status  3. Quit\n> ");
+        printf("\n========================================\n");
+        printf("  Floor %d  |  HP: %d / %d\n", p->floor, p->hp, p->maxHp);
+        printf("========================================\n");
+        printf("  1. Move Forward\n  2. Check Status\n  3. Save & Quit\n  > ");
 
         int choice;
         scanf("%d", &choice);
 
         if (choice == 1) {
             randomEvent(p, p->difficulty);
-            if (p->hp > 0) p->floor++;
+            if (p->hp <= 0) {
+                printf("\n  GAME OVER. Reached floor %d.\n", p->floor);
+                break;
+            }
+                p->floor++;
         } else if (choice == 2) {
             printPlayerStatus(p);
-        } else {
+        } else if (choice == 3) {
             break;
         }
-        // forgot save on quit
     }
 }
