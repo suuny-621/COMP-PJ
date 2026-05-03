@@ -7,8 +7,10 @@ typedef struct {
     int maxHp;
     int attack;
     int defense;
-  int floor;
+    int floor;
     int difficulty;
+    int kills;
+    int gold;
 } Player;
 
 Player createPlayer(const char *name, int difficulty);

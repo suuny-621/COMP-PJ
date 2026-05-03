@@ -6,12 +6,13 @@
 typedef struct {
     char name[30];
     int hp;
+    int maxHp;
     int attack;
 } Enemy;
 
 Enemy generateEnemy(int floor, int difficulty);
 int doBattle(Player *p, Enemy *e);
-void randomEvent(Player *p, int difficulty);
+void randomEvent(Player *p);
 void gameLoop(Player *p);
 
 #endif

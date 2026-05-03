@@ -7,55 +7,71 @@
 
 int showMainMenu() {
     printf("\n========================================\n");
-        printf("        *** DUNGEON QUEST ***\n");
-    printf("========================================\n");
+    printf("        *** DUNGEON QUEST ***\n");
+        printf("========================================\n");
     printf("  1. New Game\n  2. Load Game\n  3. Exit\n  > ");
     int c;
-    scanf("%d", &c);
+        if (scanf("%d", &c) != 1) c = 3;
     return c;
 }
 
 int selectDifficulty() {
-    printf("\n  1. Easy   2. Normal   3. Hard\n  > ");
+    printf("  Select difficulty:\n");
+        printf("  1. Easy   2. Normal   3. Hard\n  > ");
     int d;
-        scanf("%d", &d);
+    if (scanf("%d", &d) != 1) d = 2;
     if (d < 1 || d > 3) d = 2;
     return d;
 }
 
 int main() {
-    srand(time(NULL));
+    srand((unsigned int)time(NULL));
 
-    int running = 1;
+        int running = 1;
     while (running) {
-            int choice = showMainMenu();
+        int choice = showMainMenu();
 
         if (choice == 1) {
             char name[50];
             printf("  Enter name: ");
             scanf("%49s", name);
 
-            int diff = selectDifficulty();
+                int diff = selectDifficulty();
             Player p = createPlayer(name, diff);
             printPlayerStatus(&p);
 
             gameLoop(&p);
-                saveGame(&p);
+
+            if (p.hp > 0) {
+                    saveGame(&p);
+            } else {
+                printf("  Delete save? (1:Yes 2:No) > ");
+                int del;
+                if (scanf("%d", &del) != 1) del = 2;
+                if (del == 1) deleteSave();
+            }
 
         } else if (choice == 2) {
             if (!saveExists()) {
-                    printf("  No save file!\n");
+                printf("  No save file!\n");
             } else {
-                Player p;
+                    Player p;
                 if (loadGame(&p)) {
                     printPlayerStatus(&p);
                     gameLoop(&p);
-                    saveGame(&p);
+                    if (p.hp > 0) {
+                        saveGame(&p);
+                    } else {
+                            printf("  Delete save? (1:Yes 2:No) > ");
+                        int del;
+                        if (scanf("%d", &del) != 1) del = 2;
+                        if (del == 1) deleteSave();
+                    }
                 }
             }
 
         } else if (choice == 3) {
-            printf("  Goodbye!\n");
+                printf("  Goodbye!\n");
             running = 0;
         }
     }

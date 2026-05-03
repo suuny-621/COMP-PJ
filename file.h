@@ -6,5 +6,6 @@
 int saveGame(Player *p);
 int loadGame(Player *p);
 int saveExists();
+void deleteSave();
 
 #endif
